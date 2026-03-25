@@ -21,3 +21,4 @@ while True:
         break
     result, score = analyze_sentiment(user_input)
     print(f"Sentiment: {result}  |  Score: {round(score, 2)}\n")
+    
