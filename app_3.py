@@ -1,80 +1,93 @@
-
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
-from transformers import pipeline
+from nltk.sentiment import SentimentIntensityAnalyzer
 
-# ── Download NLTK data (only runs on first use) ───────────────────────────────
-nltk.download("punkt", quiet=True)
-nltk.download("punkt_tab", quiet=True)
-nltk.download("stopwords", quiet=True)
+# ── Download required NLTK data (only if missing) ─────────────────────────────
+def download_nltk():
+    try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt")
 
-# ── Load HuggingFace sentiment pipeline ──────────────────────────────────────
-print("\n🔄 Loading sentiment model (DistilBERT)... this may take a moment on first run.")
-sentiment_pipeline = pipeline(
-    "sentiment-analysis",
-    model="distilbert-base-uncased-finetuned-sst-2-english"
-)
-print("✅ Model loaded.\n")
+    try:
+        nltk.data.find("corpora/stopwords")
+    except LookupError:
+        nltk.download("stopwords")
+
+    try:
+        nltk.data.find("sentiment/vader_lexicon")
+    except LookupError:
+        nltk.download("vader_lexicon")
+
+download_nltk()
+
+# ── Initialize VADER Sentiment Analyzer ───────────────────────────────────────
+sia = SentimentIntensityAnalyzer()
 
 
-# ── Preprocessing with NLTK ──────────────────────────────────────────────────
+# ── Preprocessing ─────────────────────────────────────────────────────────────
 def preprocess(text: str) -> dict:
-    """Tokenize and remove stopwords using NLTK. Returns tokens + cleaned text."""
     tokens = word_tokenize(text.lower())
     stop_words = set(stopwords.words("english"))
     filtered_tokens = [t for t in tokens if t.isalpha() and t not in stop_words]
     cleaned_text = " ".join(filtered_tokens)
+
     return {
         "original": text,
-        "tokens": tokens,
         "filtered_tokens": filtered_tokens,
         "cleaned_text": cleaned_text,
     }
 
 
-# ── Sentiment prediction with HuggingFace ────────────────────────────────────
+# ── Sentiment Analysis using VADER ────────────────────────────────────────────
 def analyze_sentiment(text: str) -> dict:
-    """Run full pipeline: preprocess → predict → return result."""
     processed = preprocess(text)
 
-    # DistilBERT works best on the original text (it handles context well)
-    # We pass the original, but show cleaned tokens as a transparency layer
-    result = sentiment_pipeline(processed["original"])[0]
+    scores = sia.polarity_scores(processed["original"])
+    compound = scores["compound"]
 
-    label = result["label"]          # POSITIVE or NEGATIVE
-    score = round(result["score"] * 100, 2)
+    # Classification logic
+    if compound >= 0.05:
+        label = "POSITIVE"
+        emoji = "😊"
+    elif compound <= -0.05:
+        label = "NEGATIVE"
+        emoji = "😞"
+    else:
+        label = "NEUTRAL"
+        emoji = "😐"
 
-    # Map to a simple emoji for readability
-    emoji = "😊" if label == "POSITIVE" else "😞"
+    confidence = round(abs(compound) * 100, 2)
 
     return {
         "label": label,
-        "confidence": score,
+        "confidence": confidence,
         "emoji": emoji,
+        "scores": scores,
         "filtered_tokens": processed["filtered_tokens"],
         "cleaned_text": processed["cleaned_text"],
     }
 
 
-# ── Display result ────────────────────────────────────────────────────────────
+# ── Display Result ────────────────────────────────────────────────────────────
 def display_result(text: str, result: dict):
     print("\n" + "─" * 50)
-    print(f"  Input Text   : {text}")
-    print(f"  Cleaned Text : {result['cleaned_text']}")
-    print(f"  Key Tokens   : {result['filtered_tokens']}")
-    print(f"  Sentiment    : {result['emoji']}  {result['label']}")
-    print(f"  Confidence   : {result['confidence']}%")
+    print(f"Input Text   : {text}")
+    print(f"Cleaned Text : {result['cleaned_text']}")
+    print(f"Key Tokens   : {result['filtered_tokens']}")
+    print(f"Sentiment    : {result['emoji']}  {result['label']}")
+    print(f"Confidence   : {result['confidence']}%")
+    print(f"Detailed     : {result['scores']}")
     print("─" * 50)
 
 
-# ── Main loop ─────────────────────────────────────────────────────────────────
+# ── Main Loop ─────────────────────────────────────────────────────────────────
 def main():
     print("=" * 50)
-    print("   NLP Sentiment Analyzer")
-    print("   NLTK + HuggingFace Transformers")
+    print("   NLTK Sentiment Analyzer (VADER)")
     print("=" * 50)
-    print("Type any sentence to analyze its sentiment.")
+    print("Type any sentence to analyze sentiment.")
     print("Type 'quit' or 'exit' to stop.\n")
 
     while True:
@@ -91,7 +104,6 @@ def main():
 
             result = analyze_sentiment(user_input)
             display_result(user_input, result)
-            print()
 
         except KeyboardInterrupt:
             print("\n\n👋 Interrupted. Bye!")
