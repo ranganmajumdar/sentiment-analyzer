@@ -112,3 +112,9 @@ Low confidence (50–70%) — sentence is sarcastic, neutral, or genuinely uncle
 
 Known Limitation
 This model was trained on movie reviews, which tend to be strongly worded. As a result it can be overconfident on everyday sentences. Ambiguous inputs like "It was okay" or "Not bad" may still show high confidence even when the sentiment is unclear.
+
+What it does and the tech stack
+Installation and usage with all 3 modes explained
+Confidence explained in plain English — since you just figured that out, it's worth documenting for anyone who reads the repo
+Version history v1 → v4 so your GitHub shows the learning progression
+What's next section so it looks like an active project
