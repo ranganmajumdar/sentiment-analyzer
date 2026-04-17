@@ -117,4 +117,5 @@ What it does and the tech stack
 Installation and usage with all 3 modes explained
 Confidence explained in plain English — since you just figured that out, it's worth documenting for anyone who reads the repo
 Version history v1 → v4 so your GitHub shows the learning progression
-What's next section so it looks like an active project
+What's next section so it looks like an active project 
+more works are yet to come
